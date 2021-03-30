@@ -2,6 +2,8 @@
 
 A demo application based on [egui-miniquad](https://github.com/not-fl3/egui-miniquad), for Linux, MacOS, Windows, WASM, Android and iOS.
 
+See a demo online here: https://frgomes.github.io/egui-miniquad-demo/docs/
+
 ## Building for Linux
 
 The main program `demo` contains the executable code for Linux and other platforms.
