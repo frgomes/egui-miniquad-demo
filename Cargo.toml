@@ -1,0 +1,76 @@
+[package]
+name = "egui-miniquad-demo"
+version = "0.1.0"
+authors = ["rgomes <rgomes.info@gmail.com>"]
+edition = "2018"
+
+# targets = [
+#     "aarch64-linux-android",
+#     "armv7-linux-androideabi",
+#     "i686-linux-android",
+#     "x86_64-linux-android",
+#     "x86_64-unknown-linux-gnu",
+# ]
+
+[[example]]
+name = "android"
+crate-type = ["cdylib"]
+
+[[example]]
+name = "demo"
+# crate-type = ["cdylib"]
+
+[dependencies]
+miniquad = { version = "=0.3.0-alpha.28", features = ["log-impl"] }
+egui = "0.10.0"
+egui-miniquad = "0.2.0"
+egui_demo_lib = "0.10.0" #-- for demo purposes only
+
+[dev-dependencies]
+pretty_assertions = "0.6"
+
+[profile.release]
+opt-level = 2 # fast and small wasm
+
+## -------------------------------------------------------------------------------------------
+
+# [target.'cfg(target_arch = "wasm32")'.dependencies]
+# sapp-wasm = { version = "0.1.23" }
+ 
+## -------------------------------------------------------------------------------------------
+
+[target.'cfg(target_os = "android")'.dependencies]
+ndk      = { git = "https://github.com/nikita-skobov/android-ndk-rs", branch = "miniglue" }
+ndk-glue = { git = "https://github.com/nikita-skobov/android-ndk-rs", branch = "miniglue" }
+ 
+[package.metadata.android]
+apk_label = "demo"
+target_sdk_version = 30
+min_sdk_version = 21
+
+## -------------------------------------------------------------------------------------------
+
+# [target.'cfg(target_os = "linux")'.dependencies]
+# sapp-linux = { version = "0.1.12", optional = true }
+# sapp-kms = { version = "0.1.1", optional = true }
+  
+## -------------------------------------------------------------------------------------------
+
+# [target.'cfg(target_os = "ios")'.dependencies]
+# sapp-ios = { version = "0.1.2" }
+ 
+## -------------------------------------------------------------------------------------------
+
+# [target.'cfg(target_os = "macos")'.dependencies]
+# sapp-darwin = { version = "0.1.6" }
+# copypasta = "0.7" # https://github.com/not-fl3/miniquad/issues/172
+ 
+## -------------------------------------------------------------------------------------------
+
+# [target.'cfg(windows)'.dependencies]
+# sapp-windows = { version = "0.2.16" }
+  
+## -------------------------------------------------------------------------------------------
+
+# [target.'cfg(not(any(target_os="linux", target_os="macos", target_os="android", target_os="ios", target_arch="wasm32", windows)))'.dependencies]
+# sapp-dummy = { version = "0.1.5" }
