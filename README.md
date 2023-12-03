@@ -9,7 +9,7 @@ See a demo online here: [https://frgomes.github.io/egui-miniquad-demo/docs/](htt
 The main program `demo` contains the executable code for Linux and other platforms.
 
 ``` bash
-./cargo.sh linux --example demo
+./build.sh linux --example demo
 ```
 
 or just the usual:
