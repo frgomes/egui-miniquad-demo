@@ -1,4 +1,5 @@
-#[cfg_attr(target_os = "android", ndk_glue::main(ndk_glue = "::miniquad::sapp_android"))]
+#[cfg(any(target_os = "android"))]
+#[allow(dead_code)]
 fn main() {
-    egui_miniquad_demo::worker::run();
+    egui_miniquad_demo::worker::main();
 }
