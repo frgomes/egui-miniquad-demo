@@ -4,6 +4,10 @@ syntax: glob
 target/
 .idea/
 
+# see: https://blog.rust-lang.org/2023/08/29/committing-lockfiles/
+Cargo.lock
+
+
 # You may want to ignore .wasm files, which are binary files.
 # We are commenting out the line below, which means that we are keeping a
 # binary file in the source control, because we want the .wasm file to appear
