@@ -1,16 +1,8 @@
 [package]
 name = "egui-miniquad-demo"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["rgomes <rgomes.info@gmail.com>"]
-edition = "2018"
-
-# targets = [
-#     "aarch64-linux-android",
-#     "armv7-linux-androideabi",
-#     "i686-linux-android",
-#     "x86_64-linux-android",
-#     "x86_64-unknown-linux-gnu",
-# ]
+edition = "2024"
 
 [[example]]
 name = "android"
@@ -18,59 +10,51 @@ crate-type = ["cdylib"]
 
 [[example]]
 name = "demo"
-# crate-type = ["cdylib"]
 
 [dependencies]
-miniquad = { version = "=0.3.0-alpha.28", features = ["log-impl"] }
-egui = "0.10.0"
-egui-miniquad = "0.2.0"
-egui_demo_lib = "0.10.0" #-- for demo purposes only
+bytemuck = "1.9"
+glam = "0.28.0"
+quad-url = "0.1"
+egui = { version = "0.28", features = ["bytemuck"] }
+miniquad = { version = "=0.4.0" }
+egui-miniquad = "0.15.0"
+egui_demo_lib = { version = "0.28", default-features = false } #-- for demo purposes only
 
 [dev-dependencies]
-pretty_assertions = "0.6"
+
+## -------------------------------------------------------------------------------------------
+
+[package.metadata.android]
+label = "demo"
+target_sdk_version = 34
+min_sdk_version = 21
+
+build_targets = [
+    "armv7-linux-androideabi", # armeabi-v7a
+    "aarch64-linux-android",   # arm64-v8a
+    "i686-linux-android",      # x86
+    "x86_64-linux-android",    # x86_64
+]
+
+## -------------------------------------------------------------------------------------------
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom = { version = "0.2.7", features = ["custom"] }
+quad-rand = "0.2.1"
+
+## -------------------------------------------------------------------------------------------
+
+# https://github.com/not-fl3/miniquad/issues/172
+[target.'cfg(target_os = "macos")'.dependencies]
+copypasta = "0.10.0"
+
+## -------------------------------------------------------------------------------------------
 
 [profile.release]
 opt-level = 2 # fast and small wasm
 
 ## -------------------------------------------------------------------------------------------
 
-# [target.'cfg(target_arch = "wasm32")'.dependencies]
-# sapp-wasm = { version = "0.1.23" }
- 
-## -------------------------------------------------------------------------------------------
-
-[target.'cfg(target_os = "android")'.dependencies]
-ndk      = { git = "https://github.com/nikita-skobov/android-ndk-rs", branch = "miniglue" }
-ndk-glue = { git = "https://github.com/nikita-skobov/android-ndk-rs", branch = "miniglue" }
- 
-[package.metadata.android]
-apk_label = "demo"
-target_sdk_version = 30
-min_sdk_version = 21
-
-## -------------------------------------------------------------------------------------------
-
-# [target.'cfg(target_os = "linux")'.dependencies]
-# sapp-linux = { version = "0.1.12", optional = true }
-# sapp-kms = { version = "0.1.1", optional = true }
-  
-## -------------------------------------------------------------------------------------------
-
-# [target.'cfg(target_os = "ios")'.dependencies]
-# sapp-ios = { version = "0.1.2" }
- 
-## -------------------------------------------------------------------------------------------
-
-# [target.'cfg(target_os = "macos")'.dependencies]
-# sapp-darwin = { version = "0.1.6" }
-# copypasta = "0.7" # https://github.com/not-fl3/miniquad/issues/172
- 
-## -------------------------------------------------------------------------------------------
-
-# [target.'cfg(windows)'.dependencies]
-# sapp-windows = { version = "0.2.16" }
-  
-## -------------------------------------------------------------------------------------------
-
-# [target.'cfg(not(any(target_os="linux", target_os="macos", target_os="android", target_os="ios", target_arch="wasm32", windows)))'.dependencies]
-# sapp-dummy = { version = "0.1.5" }
+# native:
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tracing-subscriber = "0.3"
