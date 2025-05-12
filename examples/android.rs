@@ -1,12 +1,12 @@
 use android_activity::{AndroidApp, MainEvent, PollEvent};
 use std::time::Duration; // Needed for the poll_events timeout
 
-use log::{info, warn, error, LevelFilter};
-use tracing::Level;
+use tracing_android::layer;
 use tracing_log::LogTracer;
-use tracing_subscriber::prelude::*;
-use tracing_subscriber::{fmt, filter, registry};
-use tracing_logcat::{LogcatMakeWriter, LogcatTag};
+use tracing::{Level, info, warn, error, debug, trace};
+use tracing_subscriber::{registry, prelude::*};
+use tracing_subscriber::filter::{EnvFilter, LevelFilter};
+
 
 // This is the entry point function called by the android-activity glue layer.
 // #[no_mangle] is essential to ensure the function name is not changed by the compiler,
@@ -14,47 +14,12 @@ use tracing_logcat::{LogcatMakeWriter, LogcatTag};
 #[cfg(any(target_os = "android"))]
 #[unsafe(no_mangle)]
 fn android_main(app: AndroidApp) {
-    // Initialize the tracing-log tracer *first*.
-    // This captures any `log!` messages emitted by dependencies.
-    // This effectively replaces `android_logger::init_once`.
-    // The `tracing-log` crate will set the global `log` logger.
-
-    use tracing::instrument::WithSubscriber;
     LogTracer::builder().init().expect("Failed to set log tracer");
-    log::info!("Log tracer initialized."); // This message will be captured by tracing-log
-
-    // 1. Create a writer that directs output to Android's logcat.
-    // LogcatTag::Target uses the tracing target as the logcat tag.
-    // LogcatTag::Fixed("MyAppTag".to_string()) would use a fixed tag.
-    let logcat_writer = LogcatMakeWriter::new(LogcatTag::Target)
-        .expect("Failed to create logcat writer");
-
-    // 2. Build the tracing subscriber using the fmt (formatting) module.
-    let subscriber = fmt::Subscriber::builder()
-        // Set the writer for the formatter to our logcat writer.
-        .with_writer(logcat_writer)
-        // Optional: Set a maximum level. Events below this level will be discarded early.
-        // Level::INFO, Level::DEBUG, Level::TRACE are common during development.
-        .with_max_level(Level::INFO)
-        // Optional: Disable ANSI colors, as logcat doesn't typically support them well.
-        .with_ansi(false)
-        // Optional: Customize the event format.
-        // logcat adds timestamps, so `without_time()` is often desired.
-        // You might want to include the target and level.
-        .event_format(fmt::format().with_target(true).with_level(true).compact())
-        // Finish building the subscriber.
-        .finish();
-
-    // 3. Install the subscriber as the global default.
-    // `try_init` returns a Result, which is safer than `init` if there's a chance
-    // a subscriber might already be installed (e.g., in tests), but `init` panics
-    // if it fails, which might be desired in a main application entry point.
-    // Use `init().expect("Failed to set global tracing subscriber");` if panicking is okay.
-    tracing::subscriber::set_global_default(subscriber)
-        .expect("Failed to set global tracing subscriber");
-
-    tracing::info!("Tracing subscriber initialized successfully!");
-    tracing::info!("Entering android_main - Application started.");
+    log::info!("Log tracer initialized by tracing-log."); // This message goes through the new tracer
+    let subscriber = registry::Registry::default()
+        .with(EnvFilter::from_default_env()
+              .add_directive(LevelFilter::INFO.into()));
+    tracing::info!("Android application started.");
 
     // In a real application (like a game), you would typically set up your
     // graphics context (e.g., miniquad) here or after certain events like InitWindow.
@@ -101,52 +66,72 @@ fn android_main(app: AndroidApp) {
                             // Often, you call miniquad::start unconditionally after the loop setup,
                             // and its backend handles the window availability based on this event.
                         }
-                        //FIXME MainEvent::Terminate => {
-                        //FIXME     tracing::info!("MainEvent::Terminate - Application is terminating.");
-                        //FIXME     // Clean up resources here.
-                        //FIXME     app_is_running = false; // Exit the main loop
-                        //FIXME }
-                        //FIXME MainEvent::Resume => {
-                        //FIXME     tracing::info!("MainEvent::Resume - Application is resuming.");
-                        //FIXME     // Resume game loop, audio, etc.
-                        //FIXME }
-                        //FIXME MainEvent::Pause => {
-                        //FIXME     tracing::info!("MainEvent::Pause - Application is pausing.");
-                        //FIXME     // Pause game loop, audio, save state, etc.
-                        //FIXME }
-                        //FIXME MainEvent::Input { .. } => {
-                        //FIXME     // info!("MainEvent::Input - Received input event.");
-                        //FIXME     // Input events like touch, key presses are delivered here.
-                        //FIXME     // These would typically be processed by your input handling system
-                        //FIXME     // (e.g., within miniquad's event handling if it's integrated).
-                        //FIXME }
-                        //FIXME MainEvent::DestroyWindow => {
-                        //FIXME     tracing::info!("MainEvent::DestroyWindow - Window surface is being destroyed.");
-                        //FIXME     // Clean up graphics resources associated with the window.
-                        //FIXME     activity_has_window = false;
-                        //FIXME }
-                        //FIXME MainEvent::SaveInstanceState => {
-                        //FIXME     tracing::info!("MainEvent::SaveInstanceState - Save application state.");
-                        //FIXME     // Save any transient state that needs to be restored later.
-                        //FIXME }
-                        //FIXME MainEvent::ReceiveConfig { .. } => {
-                        //FIXME     tracing::info!("MainEvent::ReceiveConfig - Configuration changed (e.g., orientation).");
-                        //FIXME     // React to configuration changes if needed.
-                        //FIXME }
-                        //FIXME MainEvent::LowMemory => {
-                        //FIXME     warn!("MainEvent::LowMemory - System is low on memory.");
-                        //FIXME      // Free up some memory if possible.
-                        //FIXME }
+                        MainEvent::TerminateWindow { .. } => {
+                            tracing::info!("MainEvent::TerminateWindow - Application is terminating.");
+                            // Clean up resources here.
+                            app_is_running = false; // Exit the main loop
+                        }
+                        MainEvent::Resume { .. } => {
+                            tracing::info!("MainEvent::Resume - Application is resuming.");
+                            // Resume game loop, audio, etc.
+                        }
+                        MainEvent::Pause { .. } => {
+                            tracing::info!("MainEvent::Pause - Application is pausing.");
+                            // Pause game loop, audio, save state, etc.
+                        }
+                        MainEvent::InputAvailable { .. } => {
+                            tracing::info!("MainEvent::InputAvailable - Received input event.");
+                            // Input events like touch, key presses are delivered here.
+                            // These would typically be processed by your input handling system
+                            // (e.g., within miniquad's event handling if it's integrated).
+                        }
+                        MainEvent::Destroy { .. } => {
+                            tracing::info!("MainEvent::Destroy - Window surface is being destroyed.");
+                            // Clean up graphics resources associated with the window.
+                            activity_has_window = false;
+                        }
+                        MainEvent::SaveState { .. } => {
+                            tracing::info!("MainEvent::SaveState - Save application state.");
+                            // Save any transient state that needs to be restored later.
+                        }
+                        MainEvent::ConfigChanged { .. } => {
+                            tracing::info!("MainEvent::ConfigChanged - Configuration changed (e.g., orientation).");
+                            // React to configuration changes if needed.
+                        }
+                        MainEvent::LowMemory { .. } => {
+                            warn!("MainEvent::LowMemory - System is low on memory.");
+                             // Free up some memory if possible.
+                        }
+                        MainEvent::WindowResized { .. } => {
+                            tracing::info!("MainEvent::WindowResized.");
+                        }
+                        MainEvent::RedrawNeeded { .. } => {
+                            tracing::info!("MainEvent::RedrawNeeded.");
+                        }
+                        MainEvent::ContentRectChanged { .. } => {
+                            tracing::info!("MainEvent::ContentRectChanged.");
+                        }
+                        MainEvent::GainedFocus { .. } => {
+                            tracing::info!("MainEvent::GainedFocus.");
+                        }
+                        MainEvent::LostFocus { .. } => {
+                            tracing::info!("MainEvent::LostFocus.");
+                        }
+                        MainEvent::Start { .. } => {
+                            tracing::info!("MainEvent::Start - Start application.");
+                        }
+                        MainEvent::Stop { .. } => {
+                            tracing::info!("MainEvent::Stop - Stop application.");
+                        }
+                        MainEvent::InsetsChanged { .. } => {
+                            tracing::info!("MainEvent::InsetsChanged.");
+                        }
                         _ => {
-                             // Handle other less common events if necessary
-                             tracing::info!("Other MainEvent:{:?}", main_event);
+                            // Handle other less common events if necessary
+                            tracing::info!("Other MainEvent:{:?}", main_event);
                         }
                     }
                 }
-                //FIXME // PollEvent can have other variants depending on features, e.g., NativeEvent
-                //FIXME PollEvent::NativeEvent { .. } => {
-                //FIXME     tracing::info!("Received native event");
-                //FIXME }
                 _ => {
                     // Handle other less common events if necessary
                     tracing::info!("Other event: {:?}", event);
@@ -169,7 +154,7 @@ fn android_main(app: AndroidApp) {
         if activity_has_window {
             // Perform rendering using miniquad
             // This is usually done by miniquad's internal loop after miniquad::start is called
-            quad_main()
+            //XXX quad_main()
         }
     }
 
@@ -181,5 +166,5 @@ fn android_main(app: AndroidApp) {
 
 #[unsafe(no_mangle)]
 pub fn quad_main() {
-    egui_miniquad_demo::worker::start();
+    //XXX egui_miniquad_demo::worker::start();
 }
