@@ -134,6 +134,7 @@ function android_exports {
     cat <<EOD > "${config}"
 #!/bin/bash
 export ANDROID_HOME=\${TOOLS_HOME:=\$HOME/tools}/android
+export         NDK_HOME=\${TOOLS_HOME:=\$HOME/tools}/android/android-ndk-r25b
 export ANDROID_NDK_HOME=\${TOOLS_HOME:=\$HOME/tools}/android/android-ndk-r25b
 export PATH=\${PATH}:\${ANDROID_HOME}/tools/bin:\${ANDROID_HOME}/platform-tools::\${ANDROID_HOME}/emulator
 EOD
