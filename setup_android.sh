@@ -149,10 +149,8 @@ EOD
 }
 
 
-#check_java8 && \
-#  rustup_add_targets && \
-#    android_download_tools && android_sdk_install && android_ndk_install && \
-#      android_sdkmanager_configure && android_avdmanager_configure && \
-#        android_exports
-
+check_java8 && \
+  rustup_add_targets && \
+    android_download_tools && android_sdk_install && android_ndk_install && \
+      android_sdkmanager_configure && android_avdmanager_configure && \
         android_exports
